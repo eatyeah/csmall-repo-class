@@ -8,11 +8,14 @@ import cn.tedu.mall.product.service.front.IForFrontCategoryService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.dubbo.config.annotation.DubboReference;
 import org.apache.dubbo.config.annotation.DubboService;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @DubboService
 @Service
@@ -56,7 +59,32 @@ public class FrontCategoryServiceImpl implements IFrontCategoryService {
         return null;
     }
 
-    private FrontCategoryTreeVO<FrontCategoryEntity> initTree(List<CategoryStandardVO> categoryStandardVOs) {
+    private FrontCategoryTreeVO<FrontCategoryEntity> initTree(
+                            List<CategoryStandardVO> categoryStandardVOs) {
+
+        // 第一步:
+        // 确定所有分类的父分类id
+        // 以父分类id为Key,以子分类对象为value保存在一个Map中
+        // 一个父分类可以包含多个子分类对象,所以这个Map的value是个List
+        Map<Long,List<FrontCategoryEntity>> map=new HashMap<>();
+        log.info("当前分类对象总数量:{}",categoryStandardVOs.size());
+        // 遍历数据库查询出来的所有分类对象集合
+        for(CategoryStandardVO categoryStandardVO : categoryStandardVOs){
+            // 因为CategoryStandardVO没有children属性不能保存子分类对象
+            // 所以要将CategoryStandardVO对象转换为能够保存children属性的FrontCategoryEntity
+            FrontCategoryEntity frontCategoryEntity=new FrontCategoryEntity();
+            // 同名属性赋值
+            BeanUtils.copyProperties(categoryStandardVO,frontCategoryEntity);
+            // 获取当前分类对象的父分类id,用作Map中的Key(如果父分类id为0,表示一级分类)
+            // 将父分类id取出,以便后续使用
+            Long parentId=frontCategoryEntity.getParentId();
+            // 要判断这个父分类id作为Key是否已经在map中出现
+            if(map.containsKey(parentId)){
+                // 如果当前map已经存在这个key,直接将当前分类对象添加到value的集合中即可
+                map.get(parentId).add(frontCategoryEntity);
+            }
+
+        }
 
         return null;
     }

@@ -1,5 +1,7 @@
 package cn.tedu.mall.front.service.impl;
 
+import cn.tedu.mall.common.exception.CoolSharkServiceException;
+import cn.tedu.mall.common.restful.ResponseCode;
 import cn.tedu.mall.front.service.IFrontCategoryService;
 import cn.tedu.mall.pojo.front.entity.FrontCategoryEntity;
 import cn.tedu.mall.pojo.front.vo.FrontCategoryTreeVO;
@@ -12,6 +14,7 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
+import sun.security.x509.FreshestCRLExtension;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -91,9 +94,52 @@ public class FrontCategoryServiceImpl implements IFrontCategoryService {
                 // 最后再将这个包含分类对象的list添加到value中
                 map.put(parentId,value);
             }
-
         }
-
-        return null;
+        // 第二步:
+        // 将子分类对象关联到对应的父分类对象的children属性中
+        // 先获的所有一级分类对象, 也就是父分类id为0的对象
+        List<FrontCategoryEntity> firstLevels=map.get(0L);
+        // 判断一级分类集合如果为null,直接抛出异常,终止程序
+        if(firstLevels==null || firstLevels.isEmpty()){
+            throw new CoolSharkServiceException(
+                    ResponseCode.INTERNAL_SERVER_ERROR,"缺失一级分类对象!");
+        }
+        // 遍历一级分类集合
+        for(FrontCategoryEntity oneLevel : firstLevels){
+            // 获取当前一级分类对象的id
+            Long secondLevelParentId=oneLevel.getId(); // getId!!!!!!!!!!
+            // 根据上面一级分类的id,获得对应的二级分类集合
+            List<FrontCategoryEntity> secondLevels=map.get(secondLevelParentId);
+            if(secondLevels==null || secondLevels.isEmpty()){
+                // 二级分类缺失不用抛异常,报出警告即可
+                log.warn("当前分类没有二级分类内容:{}",secondLevelParentId);
+                // 跳过本次循环,继续下次循环
+                continue;
+            }
+            // 确定二级分类对象后,遍历二级分类对象集合
+            for(FrontCategoryEntity twoLevel : secondLevels){
+                // 获取当前二级分类的id(三级分类的父id)
+                Long thirdLevelParentId=twoLevel.getId();  //getId!!!!!!!!
+                // 根据二级分类的id获取对应的三级分类对象集合
+                List<FrontCategoryEntity> thirdLevels=map.get(thirdLevelParentId);
+                // 判断三级分类对象集合是否为null
+                if(thirdLevels==null || thirdLevels.isEmpty()){
+                    log.warn("当前二级分类对象没有三级分类内容:{}",thirdLevelParentId);
+                    continue;
+                }
+                // 将三级分类对象集合,添加到当前二级分类对象的children属性中
+                twoLevel.setChildrens(thirdLevels);
+            }
+            // 将二级分类对象集合(已经赋好值的对象集合),添加到一级分类对象的children属性中
+            oneLevel.setChildrens(secondLevels);
+        }
+        // 到此为止,所有的分类对象,都应该正确保存到了自己对应的父分类对象的children属性中
+        // 但是最后要将一级分类的集合firstLevels,赋值给FrontCategoryTreeVO<FrontCategoryEntity>
+        // 所以要先实例化它,再给它赋值,返回
+        FrontCategoryTreeVO<FrontCategoryEntity> treeVO=
+                new FrontCategoryTreeVO<>();
+        treeVO.setCategories(firstLevels);
+        // 最后千万别忘了返回!!!!
+        return treeVO;
     }
 }

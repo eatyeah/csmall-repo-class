@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 @DubboService
 @Service
@@ -56,16 +57,19 @@ public class FrontCategoryServiceImpl implements IFrontCategoryService {
         // 请记住CategoryStandardVO是没有children属性的,FrontCategoryEntity是有的!
         // 下面就是要编写一个方法,将子分类对象保存到对应的父分类对象的children属性中
         // 所有大概思路就是将CategoryStandardVO转换为FrontCategoryEntity
-        // 转换和构建过程比较复杂,我们专门编写一个类来完成
+        // 转换和构建过程比较复杂,我们专门编写一个方法来完成
         FrontCategoryTreeVO<FrontCategoryEntity> treeVO=
                                             initTree(categoryStandardVOs);
-
-        return null;
+        // 上面方法,完成了三级分类树的构建,下面要将treeVO保存到Redis
+        redisTemplate.boundValueOps(CATEGORY_TREE_KEY)
+                .set(treeVO,1, TimeUnit.MINUTES);
+        // 上面时间定义了1分钟,是学习测试比较适合的,实际开发中可能会保存较长时间例如24小时
+        // 最后别忘了返回!!!!
+        return treeVO;
     }
 
     private FrontCategoryTreeVO<FrontCategoryEntity> initTree(
                             List<CategoryStandardVO> categoryStandardVOs) {
-
         // 第一步:
         // 确定所有分类的父分类id
         // 以父分类id为Key,以子分类对象为value保存在一个Map中

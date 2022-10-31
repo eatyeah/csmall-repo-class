@@ -13,6 +13,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -82,6 +83,13 @@ public class FrontCategoryServiceImpl implements IFrontCategoryService {
             if(map.containsKey(parentId)){
                 // 如果当前map已经存在这个key,直接将当前分类对象添加到value的集合中即可
                 map.get(parentId).add(frontCategoryEntity);
+            }else{
+                // 如果当前map没有这个key,那么我们就要创建这个key-value
+                // 要先实例化一个List对象,作为value
+                List<FrontCategoryEntity> value=new ArrayList<>();
+                value.add(frontCategoryEntity);
+                // 最后再将这个包含分类对象的list添加到value中
+                map.put(parentId,value);
             }
 
         }

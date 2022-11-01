@@ -24,7 +24,6 @@ public class FrontSpuDetailController {
     @GetMapping("/{spuId}")
     @ApiOperation("根据SpuId查询spuDetail对象")
     @ApiImplicitParam(value = "spuId",name = "spuId",example = "1")
-
     public JsonResult<SpuDetailStandardVO> getSpuDetailBySpuId(
             @PathVariable Long spuId){
         SpuDetailStandardVO spuDetailStandardVO=

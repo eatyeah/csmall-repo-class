@@ -7,6 +7,7 @@ import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiImplicitParam;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -23,6 +24,7 @@ public class FrontSpuDetailController {
     @GetMapping("/{spuId}")
     @ApiOperation("根据SpuId查询spuDetail对象")
     @ApiImplicitParam(value = "spuId",name = "spuId",example = "1")
+
     public JsonResult<SpuDetailStandardVO> getSpuDetailBySpuId(
             @PathVariable Long spuId){
         SpuDetailStandardVO spuDetailStandardVO=

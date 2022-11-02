@@ -61,7 +61,7 @@
         )
     </insert>
     <!--  修改购物车中sku商品的数量   -->
-    <update id="updateQuantityById" >
+    <update id="updateQuantityById"  >
         update
             oms_cart
         set
@@ -70,6 +70,25 @@
             id=#{id}
     </update>
 
+    <!-- 根据用户id查询购物车中sku信息  -->
+    <!--
+        我们使用resultType声明返回类型时
+        Mybatis内置按驼峰命名法自动生成列名对属性名的映射
+        列名              属性名
+        id                 id
+        user_id            userId
+        main_picture       mainPicture
+        title              title
+    -->
+    <select id="selectCartsByUserId"
+            resultType="cn.tedu.mall.pojo.order.vo.CartStandardVO">
+        select
+            <include refid="SimpleQueryFields" />
+        from
+            oms_cart
+        where
+            user_id=#{id}
+    </select>
 
 
 

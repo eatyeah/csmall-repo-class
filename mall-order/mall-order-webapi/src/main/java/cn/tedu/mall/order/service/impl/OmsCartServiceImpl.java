@@ -71,9 +71,15 @@ public class OmsCartServiceImpl implements IOmsCartService {
         return JsonPage.restPage(new PageInfo<>(list));
     }
 
+    // 支持批量删除购物车中sku商品的方法
     @Override
     public void removeCart(Long[] ids) {
-
+        // 调用mapper中批量删除的方法即可
+        int rows=omsCartMapper.deleteCartsByIds(ids);
+        if(rows==0){
+            throw new CoolSharkServiceException(ResponseCode.NOT_FOUND,
+                    "您要删除的商品已经删除了!");
+        }
     }
 
     @Override

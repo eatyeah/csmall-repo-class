@@ -61,6 +61,21 @@ public class OmsCartController {
 
     }
 
+    @PostMapping("/delete")
+    @ApiOperation("根据id数组删除购物车中的sku信息")
+    @ApiImplicitParam(value = "包含要删除id的数组",name = "ids",
+                                required = true, dataType = "array")
+    // 当@PreAuthorize注解后面要判断的权限内容以ROLE_开头时
+    // 表示我们判断的内容是SpringSecurity框架约定的角色
+    // 我们可以在@PreAuthorize注解()里使用hasRole来简化对角色的判断
+    // hasRole('user')这样的判断会检查当前登录用户是否有ROLE_user这个角色
+    // 也就是会自动在user前加ROLE_来判断
+    // @PreAuthorize("hasAuthority('ROLE_user')")
+    @PreAuthorize("hasRole('user')")
+    public JsonResult removeCartsByIds(Long[] ids){
+        omsCartService.removeCart(ids);
+        return JsonResult.ok("删除完成!");
+    }
 
 
 

@@ -21,5 +21,7 @@ public interface OmsCartMapper {
     // 根据用户id查询购物车中sku信息
     List<CartStandardVO> selectCartsByUserId(Long userId);
 
+    // 根据用户选中的一个或多个id,删除购物车中的商品(批量删除操作)
+    int deleteCartsByIds(Long[] ids);
 
 }

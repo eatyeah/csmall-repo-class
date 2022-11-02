@@ -112,5 +112,15 @@
             user_id=#{userId}
     </delete>
 
+    <!--  根据用户id和SkuId删除商品 -->
+    <delete id="deleteCartByUserIdAndSkuId">
+        delete from
+            oms_cart
+        where
+            user_id=#{userId}
+        and
+            sku_id=#{skuId}
+    </delete>
+
 </mapper>
 

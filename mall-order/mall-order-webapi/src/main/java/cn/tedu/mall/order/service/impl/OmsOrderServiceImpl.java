@@ -4,27 +4,109 @@ import cn.tedu.mall.common.exception.CoolSharkServiceException;
 import cn.tedu.mall.common.pojo.domain.CsmallAuthenticationInfo;
 import cn.tedu.mall.common.restful.JsonPage;
 import cn.tedu.mall.common.restful.ResponseCode;
+import cn.tedu.mall.order.mapper.OmsOrderItemMapper;
+import cn.tedu.mall.order.mapper.OmsOrderMapper;
+import cn.tedu.mall.order.service.IOmsCartService;
 import cn.tedu.mall.order.service.IOmsOrderService;
+import cn.tedu.mall.order.utils.IdGeneratorUtils;
 import cn.tedu.mall.pojo.order.dto.OrderAddDTO;
 import cn.tedu.mall.pojo.order.dto.OrderListTimeDTO;
 import cn.tedu.mall.pojo.order.dto.OrderStateUpdateDTO;
+import cn.tedu.mall.pojo.order.model.OmsOrder;
 import cn.tedu.mall.pojo.order.vo.OrderAddVO;
 import cn.tedu.mall.pojo.order.vo.OrderDetailVO;
 import cn.tedu.mall.pojo.order.vo.OrderListVO;
+import cn.tedu.mall.product.service.order.IForOrderSkuService;
+import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.dubbo.config.annotation.DubboReference;
 import org.apache.dubbo.config.annotation.DubboService;
+import org.springframework.beans.BeanUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.UUID;
 
 // 后面的秒杀业务需要调用这个生成订单的方法,所以需要支持dubbo调用
 @DubboService
 @Service
 @Slf4j
 public class OmsOrderServiceImpl implements IOmsOrderService {
+
+    @DubboReference
+    private IForOrderSkuService dubboSkuService;
+    @Autowired
+    private IOmsCartService omsCartService;
+    @Autowired
+    private OmsOrderMapper omsOrderMapper;
+    @Autowired
+    private OmsOrderItemMapper omsOrderItemMapper;
+
+    // 新增订单的方法
+    // 这个方法dubbo调用了Product模块的方法,操作了数据库,有分布式的事务需求
+    // 所以要使用注解激活Seata分布式事务的功能
+    @GlobalTransactional
     @Override
     public OrderAddVO addOrder(OrderAddDTO orderAddDTO) {
+        // 第一部分:收集信息,准备数据
+        // 先实例化OmsOrder对象
+        OmsOrder order=new OmsOrder();
+        // 当前方法参数orderAddDTO有很多order需要的同名属性,直接赋值接口
+        BeanUtils.copyProperties(orderAddDTO,order);
+        // orderAddDTO中属性比OmsOrder要少,缺少的属性要我们自己赋值或生成
+        // 可以编写一个专门的方法,来进行数据的收集
+        loadOrder(order);
+
+        // 第二部分:执行操作数据库的指令
+        // 第三部分:准备返回值,返回给前端
+
         return null;
+    }
+
+    // 为Order对象补全属性值的方法
+    private void loadOrder(OmsOrder order) {
+        // 本方法针对order对象没有被赋值的属性,进行生成或手动赋值
+        // 给id赋值,订单业务不使用数据库自增列做id,而使用Leaf分布式序列生成系统
+        Long id = IdGeneratorUtils.getDistributeId("order");
+        order.setId(id);
+
+        // 生成订单号,直接使用UUID即可
+        order.setSn(UUID.randomUUID().toString());
+        // 赋值UserId
+        // 以后秒杀业务调用这个方法时,userId属性是会被赋值的
+        // 所以这里要判断一下userId是否已经有值,没有值再赋值
+        if (order.getUserId() == null) {
+            // 从SpringSecurity上下文中获得当前登录用户id
+            order.setUserId(getUserId());
+        }
+
+        // 为订单状态赋值
+        // 订单状态如果为null ,将其设默认值0,表示未支付
+        if (order.getState() == null){
+            order.setState(0);
+        }
+
+        // 为了保证下单时间和数据创建时间和最后修改时间一致
+        // 我们给他们赋相同的值
+        LocalDateTime now=LocalDateTime.now();
+        order.setGmtOrder(now);
+        order.setGmtCreate(now);
+        order.setGmtModified(now);
+
+        // 验算实际支付金额
+        // 计算公式:   实际支付金额=原价-优惠+运费
+        // 数据类型使用BigDecimal,防止浮点偏移,还有更大的取值范围
+        BigDecimal price=order.getAmountOfOriginalPrice();
+        BigDecimal freight=order.getAmountOfFreight();
+        BigDecimal discount=order.getAmountOfDiscount();
+        BigDecimal actualPay=price.subtract(discount).add(freight);
+        // 最后将计算完成的实际支付金额赋值给order
+        order.setAmountOfActualPay(actualPay);
+
     }
 
     @Override

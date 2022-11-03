@@ -94,5 +94,50 @@
          )
     </insert>
 
+    <!--   声明订单和订单项的关联关系映射   -->
+    <resultMap id="OrderListMap" type="cn.tedu.mall.pojo.order.vo.OrderListVO">
+        <id column="id" property="id" />
+        <result column="sn" property="sn" />
+        <result column="user_id" property="userId" />
+        <result column="contact_name" property="contactName" />
+        <result column="state" property="state" />
+        <result column="amount_of_actual_pay" property="amountOfActualPay" />
+        <result column="gmt_order" property="gmtOrder" />
+        <result column="gmt_pay" property="gmtPay" />
+        <result column="gmt_create" property="gmtCreate" />
+        <result column="gmt_modified" property="gmtModified" />
+    </resultMap>
+
+    <!--  查询当前用户指定时间范围内的所有订单信息(包含订单项)   -->
+    <select id="selectOrdersBetweenTimes" >
+        SELECT
+            oo.id,
+            oo.sn,
+            oo.user_id,
+            oo.contact_name,
+            oo.state,
+            oo.amount_of_actual_pay,
+            oo.gmt_order,
+            oo.gmt_pay,
+            oo.gmt_create,
+            oo.gmt_modified,
+            ooi.id ooi_id,
+            ooi.order_id,
+            ooi.sku_id,
+            ooi.title,
+            ooi.price,
+            ooi.quantity
+        FROM oms_order oo
+        JOIN oms_order_item ooi ON oo.id=ooi.order_id
+        WHERE
+            oo.user_id=#{userId}
+        AND
+            oo.gmt_create &gt; #{startTime}
+        AND
+            oo.gmt_create &lt; #{endTime}
+        ORDER BY
+            oo.gmt_modified DESC
+
+    </select>
 
 </mapper>

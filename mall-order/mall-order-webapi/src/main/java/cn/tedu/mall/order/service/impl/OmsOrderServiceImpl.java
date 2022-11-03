@@ -13,6 +13,7 @@ import cn.tedu.mall.pojo.order.dto.OrderAddDTO;
 import cn.tedu.mall.pojo.order.dto.OrderItemAddDTO;
 import cn.tedu.mall.pojo.order.dto.OrderListTimeDTO;
 import cn.tedu.mall.pojo.order.dto.OrderStateUpdateDTO;
+import cn.tedu.mall.pojo.order.model.OmsCart;
 import cn.tedu.mall.pojo.order.model.OmsOrder;
 import cn.tedu.mall.pojo.order.model.OmsOrderItem;
 import cn.tedu.mall.pojo.order.vo.OrderAddVO;
@@ -93,9 +94,9 @@ public class OmsOrderServiceImpl implements IOmsOrderService {
             // 将赋好值的对象添加到omsOrderItems集合中
             omsOrderItems.add(orderItem);
             // 第二部分:执行操作数据库的指令
+            // 1.减少库存
             // 当前循环是订单中的一件商品,我们可以在此处对这个商品进行库存的减少
             // 当前对象属性中是包含skuId和要购买的商品数量的,所以可以执行库存的修改
-            // 1.减少库存
             // 先获取skuId
             Long skuId=orderItem.getSkuId();
             // 修改库存是Dubbo调用的
@@ -108,15 +109,30 @@ public class OmsOrderServiceImpl implements IOmsOrderService {
                 throw new CoolSharkServiceException(ResponseCode.BAD_REQUEST,
                         "库存不足!");
             }
-
+            // 2.删除勾选的购物车商品
+            OmsCart omsCart=new OmsCart();
+            omsCart.setUserId(order.getUserId());
+            omsCart.setSkuId(skuId);
+            // 执行删除的方法
+            omsCartService.removeUserCarts(omsCart);
         }
-
-
-
-
+        // 3.执行新增订单
+        // omsOrderMapper直接调用新增订单的方法即可
+        omsOrderMapper.insertOrder(order);
+        // 4.新增订单中所有商品的订单项信息
+        // omsOrderItemMapper中编写了批量新增订单项的功能
+        omsOrderItemMapper.insertOrderItemList(omsOrderItems);
         // 第三部分:准备返回值,返回给前端
-
-        return null;
+        // 当前业务逻辑层方法返回值为OrderAddVO
+        // 我们需要做的就是实例化这个对象,给它赋值并返回
+        OrderAddVO addVO=new OrderAddVO();
+        // 给addVO各属性赋值
+        addVO.setId(order.getId());
+        addVO.setSn(order.getSn());
+        addVO.setCreateTime(order.getGmtOrder());
+        addVO.setPayAmount(order.getAmountOfActualPay());
+        // 最后千万别忘了返回addVO!!!!!
+        return addVO;
     }
 
     // 为Order对象补全属性值的方法

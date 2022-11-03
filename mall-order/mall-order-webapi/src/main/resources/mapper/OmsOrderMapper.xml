@@ -106,6 +106,21 @@
         <result column="gmt_pay" property="gmtPay" />
         <result column="gmt_create" property="gmtCreate" />
         <result column="gmt_modified" property="gmtModified" />
+        <!--  当前实体类中有集合类型属性,要使用collection标签进行映射 -->
+        <!--
+            property: 指定实体类中映射为集合类型的属性名
+            javaType: 指定当前映射集合的类型,默认就是List类型,所以当前实体类映射无需编写
+            ofType:   指定当前集合泛型的类型
+        -->
+        <collection property="orderItems"
+                    ofType="cn.tedu.mall.pojo.order.vo.OrderItemListVO">
+            <id column="ooi_id" property="id" />
+            <result column="order_id" property="orderId" />
+            <result column="sku_id" property="skuId" />
+            <result column="title" property="title" />
+            <result column="price" property="price" />
+            <result column="quantity" property="quantity" />
+        </collection>
     </resultMap>
 
     <!--  查询当前用户指定时间范围内的所有订单信息(包含订单项)   -->

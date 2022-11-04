@@ -11,6 +11,14 @@ import org.springframework.boot.test.context.SpringBootTest;
 @SpringBootTest
 public class SpuElasticTest {
 
+    @Autowired
+    private ISearchService searchService;
+
+    @Test
+    void loadData(){
+        searchService.loadSpuByPage();
+        System.out.println("ok");
+    }
 
 
 

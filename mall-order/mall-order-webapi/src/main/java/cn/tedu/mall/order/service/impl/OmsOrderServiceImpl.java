@@ -20,6 +20,8 @@ import cn.tedu.mall.pojo.order.vo.OrderAddVO;
 import cn.tedu.mall.pojo.order.vo.OrderDetailVO;
 import cn.tedu.mall.pojo.order.vo.OrderListVO;
 import cn.tedu.mall.product.service.order.IForOrderSkuService;
+import com.github.pagehelper.PageHelper;
+import com.github.pagehelper.PageInfo;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.dubbo.config.annotation.DubboReference;
@@ -192,7 +194,16 @@ public class OmsOrderServiceImpl implements IOmsOrderService {
         // 业务逻辑层首先要判断给定的时间范围,如果为空默认最近一个月
         // 如果不为空要保证结束时间大于开始时间,可以编写一个方法专门判断
         validateTimeAndLoadTime(orderListTimeDTO);
-        return null;
+        // 将userId赋值到参数中
+        orderListTimeDTO.setUserId(getUserId());
+        // 分页查询要设置分页条件
+        PageHelper.startPage(orderListTimeDTO.getPage(),
+                                orderListTimeDTO.getPageSize());
+        // 调用关联查询的方法,获得包含订单中商品信息的订单集合
+        List<OrderListVO> list=omsOrderMapper
+                        .selectOrdersBetweenTimes(orderListTimeDTO);
+        // 别忘了返回
+        return JsonPage.restPage(new PageInfo<>(list));
     }
 
     private void validateTimeAndLoadTime(OrderListTimeDTO orderListTimeDTO) {

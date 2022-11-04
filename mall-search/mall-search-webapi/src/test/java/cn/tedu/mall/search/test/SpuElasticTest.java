@@ -20,6 +20,22 @@ public class SpuElasticTest {
         System.out.println("ok");
     }
 
+    @Autowired
+    private  SpuForElasticRepository spuRepository;
+    @Test
+    void showData(){
+        Iterable<SpuForElastic> spus=spuRepository.findAll();
+        spus.forEach(spu -> System.out.println(spu));
+    }
+
+    @Test
+    void getSpuByTitle(){
+        // 根据title指定的分词查询数据
+        Iterable<SpuForElastic> spus=
+                spuRepository.querySpuForElasticsByTitleMatches("华为");
+        spus.forEach(spu -> System.out.println(spu));
+
+    }
 
 
 

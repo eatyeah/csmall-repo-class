@@ -180,8 +180,16 @@ public class OmsOrderServiceImpl implements IOmsOrderService {
 
     }
 
+    // 根据订单id,修改订单的状态
     @Override
     public void updateOrderState(OrderStateUpdateDTO orderStateUpdateDTO) {
+        // 参数类型是OrderStateUpdateDTO
+        // 修改方法参数类型是OmsOrder,所以要先实例化OmsOrder对象
+        OmsOrder order=new OmsOrder();
+        // 将参数中的属性值赋值到order对象
+        BeanUtils.copyProperties(orderStateUpdateDTO,order);
+        // 调用持续层动态修改order的方法即可
+        omsOrderMapper.updateOrderById(order);
 
     }
 

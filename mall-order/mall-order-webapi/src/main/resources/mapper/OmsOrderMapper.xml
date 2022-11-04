@@ -160,6 +160,13 @@
     利用动态sql,实现对订单内容的修改
     参数是OmsOrder类型,且必须包含id值,id不可修改,其他属性如果不为空,就修改为当前值
     -->
+    <!--
+        OmsOrder对象动态修改数据库中数据的sql语句
+        Mybatis框架动态生成修改的Sql语句,需要<set>标签
+        1. 在<set>标签的位置生成一个set关键字
+        2. 在<set></set>标签之间,根据判断动态生成的sql语句,
+            如果生成的内容最后一个字符是","就会将它删除!
+    -->
     <update id="updateOrderById">
         update  oms_order
         <set>

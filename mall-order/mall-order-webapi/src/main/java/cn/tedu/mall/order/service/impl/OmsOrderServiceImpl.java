@@ -33,6 +33,7 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -182,9 +183,41 @@ public class OmsOrderServiceImpl implements IOmsOrderService {
 
     }
 
+    // 分页和查询当前登录用户,指定时间范围内所有订单
+    // 默认查询最近一个月的订单信息,查询的返回值OrderListVO,是包含订单信息和订单中商品信息的对象
+    // 查询依赖了持久层编写好的映射关系,xml文件编写的关联查询!
     @Override
-    public JsonPage<OrderListVO> listOrdersBetweenTimes(OrderListTimeDTO orderListTimeDTO) {
+    public JsonPage<OrderListVO> listOrdersBetweenTimes(
+                                OrderListTimeDTO orderListTimeDTO) {
+        // 业务逻辑层首先要判断给定的时间范围,如果为空默认最近一个月
+        // 如果不为空要保证结束时间大于开始时间,可以编写一个方法专门判断
+        validateTimeAndLoadTime(orderListTimeDTO);
         return null;
+    }
+
+    private void validateTimeAndLoadTime(OrderListTimeDTO orderListTimeDTO) {
+        // 获取开始时间和结束时间
+        LocalDateTime start=orderListTimeDTO.getStartTime();
+        LocalDateTime end=orderListTimeDTO.getEndTime();
+        // 为了让我们的业务更加简单明了,我们设计start和end任意一个为空就查询最近一个月的订单
+        if(start==null || end==null){
+            // start设置为一个月之前的时间
+            start= LocalDateTime.now().minusMonths(1);
+            end=LocalDateTime.now();
+            // 将属性赋值到对象中
+            orderListTimeDTO.setStartTime(start);
+            orderListTimeDTO.setEndTime(end);
+        }else{
+            // 如果start和end都非null
+            // 就要判断start是否小于end,否则要抛出异常
+            if(end.toInstant(ZoneOffset.of("+8")).toEpochMilli()<
+                    start.toInstant(ZoneOffset.of("+8")).toEpochMilli()){
+                // 如果判断表示结束时间小于开始时间,抛出异常
+                throw new CoolSharkServiceException(ResponseCode.BAD_REQUEST,
+                        "结束时间应大于起始时间!");
+            }
+        }
+
     }
 
     @Override

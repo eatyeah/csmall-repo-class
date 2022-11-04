@@ -10,6 +10,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.dubbo.config.annotation.DubboReference;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -59,9 +61,26 @@ public class SearchServiceImpl implements ISearchService {
 
     }
 
+    // 根据指定关键字分页查询ES中商品信息的方法
     @Override
-    public JsonPage<SpuForElastic> search(String keyword, Integer page, Integer pageSize) {
-        return null;
+    public JsonPage<SpuForElastic> search(
+            String keyword, Integer page, Integer pageSize) {
+        // 根据参数中的分页数据,执行分页查询,注意SpringData分页页码从0开始
+        Page<SpuForElastic> spus=spuRepository.querySearch(
+                              keyword, PageRequest.of(page-1,pageSize));
+        // 当前业务逻辑层返回值是JsonPage类型,但是我们SpringData查询返回Page类型
+        // 我们需要将Page类型对象转换为JsonPage返回
+        // 可以在JsonPage类中编写一个专门转换的方法,也可以直接在当前方法中转换
+        JsonPage<SpuForElastic> jsonPage=new JsonPage<>();
+        // 分页信息
+        jsonPage.setPage(page);
+        jsonPage.setPageSize(pageSize);
+        jsonPage.setTotal(spus.getTotalElements());
+        jsonPage.setTotalPage(spus.getTotalPages());
+        // 分页数据
+        jsonPage.setList(spus.getContent());
+        // 别忘了返回!!!
+        return jsonPage;
     }
 
 

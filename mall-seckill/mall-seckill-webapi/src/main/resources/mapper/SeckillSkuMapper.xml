@@ -26,24 +26,6 @@
             seckill_limit
         </if>
     </sql>
-    <select id="findSeckillSkusBySpuId" resultMap="BaseResultMap">
-        select
-            <include refid="SimpleField" />
-        from
-            seckill_sku
-        where
-            spu_id=#{spuId}
-    </select>
-
-    <!-- 根据skuId减少指定库存数-->
-    <update id="updateReduceStockBySkuId">
-        update
-            seckill_sku
-        set
-            seckill_stock=seckill_stock - #{quantity}
-        where
-            sku_id=#{skuId}
-    </update>
 
 
 

@@ -23,6 +23,16 @@
             gmt_modified
         </if>
     </sql>
+    <!--  查询秒杀商品列表的方法  -->
+    <select id="findSeckillSpus" resultMap="BaseResultMap" >
+        select
+            <include refid="SimpleField" />
+        from
+            seckill_spu
+    </select>
+
+
+
 
 
 </mapper>

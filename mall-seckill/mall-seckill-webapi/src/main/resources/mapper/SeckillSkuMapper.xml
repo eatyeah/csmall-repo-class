@@ -26,7 +26,15 @@
             seckill_limit
         </if>
     </sql>
-
+    <!--   根据spuId查询sku列表   -->
+    <select id="findSeckillSkusBySpuId" resultMap="BaseResultMap">
+        select
+            <include refid="SimpleField" />
+        from
+            seckill_sku
+        where
+            spu_id=#{spuId}
+    </select>
 
 
 </mapper>

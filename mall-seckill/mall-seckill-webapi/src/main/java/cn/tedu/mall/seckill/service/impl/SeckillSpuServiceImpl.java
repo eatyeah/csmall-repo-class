@@ -22,6 +22,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -112,10 +113,29 @@ public class SeckillSpuServiceImpl implements ISeckillSpuService {
                     seckillSpuVO,10*60*1000+RandomUtils.nextInt(10000),
                     TimeUnit.MILLISECONDS);
         }
-
-
-
-        return null;
+        // 我们观察seckillSpuVO对象,除了url属性外,所有属性都会被赋值了
+        // 我们一旦给url赋值,就意味着允许用户指定秒杀购买操作了
+        // 所以必须判断当前时间是否在秒杀时间范围内
+        // 如果不在,就不需要给url赋值,用户就只能看不能买
+        // 获取当前时间判断是否在秒杀时间范围内
+        LocalDateTime nowTime=LocalDateTime.now();
+        // 因为是秒杀高并发状态,所以尽量不连接数据库
+        // 可以使用seckillSpuVO中秒杀开始和结束时间的属性来判断
+        // 判断的基本原则是开始时间小于当前时间,当前时间要小于结束时间
+        if(seckillSpuVO.getStartTime().isBefore(nowTime) &&
+                    nowTime.isBefore(seckillSpuVO.getEndTime())){
+            // 进入if表示当前时间是允许执行秒杀的,可以为url属性赋值
+            // 我们从redis中根据当前spuId获取已经预热好的随机码
+            String randCodeKey=SeckillCacheUtils.getRandCodeKey(spuId);
+            // redis获取随机码
+            String randCode=redisTemplate.boundValueOps(randCodeKey).get()+"";
+            // 将随机码赋值到url
+            seckillSpuVO.setUrl("/seckill/"+randCode);
+            log.info("url赋值随机码:{}",randCode);
+        }
+        // 最后别忘了返回
+        // 返回的是seckillSpuVO,实际上它是秒杀spu信息,常规spu信息和url的和
+        return seckillSpuVO;
     }
 
     // 装配操作Redis的对象

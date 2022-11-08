@@ -50,35 +50,35 @@ public class SeckillInitialJob implements Job {
     public void execute(JobExecutionContext jobExecutionContext) throws JobExecutionException {
         // 当前方法是执行缓存预热工作的
         // 本方法运行的时机是秒杀开始前5分钟,所以要获取分钟后进行秒杀的所有商品
-        LocalDateTime time=LocalDateTime.now().plusMinutes(5);
+        LocalDateTime time = LocalDateTime.now().plusMinutes(5);
         // 查询这个时间所有进行秒杀的商品
-        List<SeckillSpu> seckillSpus=spuMapper.findSeckillSpusByTime(time);
+        List<SeckillSpu> seckillSpus = spuMapper.findSeckillSpusByTime(time);
         // 遍历本批次秒杀的所有spu
-        for(SeckillSpu spu : seckillSpus){
+        for (SeckillSpu spu : seckillSpus) {
             // 我们的目标是缓存本批次所有商品的库存数
             // 那么就需要根据spuId查询到sku列表,sku对象中才有要执行秒杀的库存数
-            List<SeckillSku> seckillSkus=skuMapper
+            List<SeckillSku> seckillSkus = skuMapper
                     .findSeckillSkusBySpuId(spu.getSpuId());
             // 再次遍历seckillSkus,这个集合其中的对象里包含库存信息
-            for(SeckillSku sku : seckillSkus){
-                log.info("开始将{}号sku商品的库存数预热到Redis",sku.getSkuId());
+            for (SeckillSku sku : seckillSkus) {
+                log.info("开始将{}号sku商品的库存数预热到Redis", sku.getSkuId());
                 // 要操作Redis,先确定保存值用的Key
                 // SeckillCacheUtils.getStockKey()是获取库存字符串常量的方法
                 // 参数会追加在常量最后
                 // skuStockKey的实际值为:  mall:seckill:sku:stock:1
-                String skuStockKey=SeckillCacheUtils.getStockKey(sku.getSkuId());
+                String skuStockKey = SeckillCacheUtils.getStockKey(sku.getSkuId());
                 // 检查Redis中是否已经包含了这个key
-                if(redisTemplate.hasKey(skuStockKey)){
+                if (redisTemplate.hasKey(skuStockKey)) {
                     // 如果key已经存在,证明之前已经缓存过了,直接跳过
-                    log.info("{}号sku商品已经缓存过了",sku.getSkuId());
-                }else{
+                    log.info("{}号sku商品已经缓存过了", sku.getSkuId());
+                } else {
                     // 如果key不存在,就要将当前sku对象的库存数保存到Redis
                     // 使用StringRedisTemplate类型对象执行保存
                     stringRedisTemplate.boundValueOps(skuStockKey)
-                            .set(sku.getSeckillStock()+"",
-                                    10*60*1000+ RandomUtils.nextInt(10000),
+                            .set(sku.getSeckillStock() + "",
+                                    10 * 60 * 1000 + RandomUtils.nextInt(10000),
                                     TimeUnit.MILLISECONDS);
-                    log.info("{}号sku商品库存数成功进入缓存!",sku.getSkuId());
+                    log.info("{}号sku商品库存数成功进入缓存!", sku.getSkuId());
                 }
             }
             // 上面循环结束,完成了当前正在遍历的spu对应的所有sku库存数的缓存
@@ -87,26 +87,27 @@ public class SeckillInitialJob implements Job {
             // 随机码会在用户提交订单时,进行验证,不提供正确随机码的用户不能生成订单
             // 我们下面要做的操作就是生成随机码并保存到Redis中
             // 确定key   "mall:seckill:spu:url:rand:code:2"
-            String randCodeKey=SeckillCacheUtils.getRandCodeKey(spu.getSpuId());
+            String randCodeKey = SeckillCacheUtils.getRandCodeKey(spu.getSpuId());
             // 判断当前随机码key是否已经在redis中
-            if(redisTemplate.hasKey(randCodeKey)){
+            if (redisTemplate.hasKey(randCodeKey)) {
                 // 如果已经存在这个key,不需要做任何其它操作
                 // 但是为了方便今后的测试,我们将正确的随机码输出到控制台
-                int randCode=(int)redisTemplate.boundValueOps(randCodeKey).get();
+                int randCode = (int) redisTemplate.boundValueOps(randCodeKey).get();
                 log.info("{}号spu商品的随机码已经缓存过了,值为:{}",
-                        spu.getSpuId(),randCode);
-            }else{
+                        spu.getSpuId(), randCode);
+            } else {
                 // 如果这个key没有保存过,就生成随机码保存到Redis
                 // 生成随机码的范围自定,这里使用100000-999999
-                int randCode=RandomUtils.nextInt(900000)+100000;
+                int randCode = RandomUtils.nextInt(900000) + 100000;
                 redisTemplate.boundValueOps(randCodeKey)
-                        .set(randCode,10*60*1000+RandomUtils.nextInt(10000),
+                        .set(randCode, 10 * 60 * 1000 + RandomUtils.nextInt(10000),
                                 TimeUnit.MILLISECONDS);
                 log.info("spuId为{}号的随机码生成成功!值为:{}",
-                            spu.getSpuId(),randCode);
+                        spu.getSpuId(), randCode);
             }
 
         }
 
     }
 }
+

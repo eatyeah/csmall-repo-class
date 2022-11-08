@@ -30,5 +30,6 @@ public class PrefixConfiguration {
         //秒杀商品库存
         public static final String SECKILL_SKU_STOCK_PREFIX="mall:seckill:sku:stock:";
         public static final String SECKILL_SKU_VO_PREFIX = "mall:seckill:sku:vo:";
+
     }
 }

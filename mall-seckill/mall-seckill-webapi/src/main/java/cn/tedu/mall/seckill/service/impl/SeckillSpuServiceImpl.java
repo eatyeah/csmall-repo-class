@@ -14,6 +14,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.dubbo.config.annotation.DubboReference;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -70,8 +71,30 @@ public class SeckillSpuServiceImpl implements ISeckillSpuService {
         return null;
     }
 
+    // 装配操作Redis的对象
+    @Autowired
+    private RedisTemplate redisTemplate;
+
+    // 当前项目中没有定义spuDetail对应Redis的key的常量
+    // 要么自己去添加, 要么这里定义一个   PREFIX是"前缀"的意思
+    public static final String
+            SECKILL_SPU_DETAIL_VO_PREFIX="seckill:spu:detail:vo:";
+
+    // 查询秒杀spu信息的spuDetail
     @Override
     public SeckillSpuDetailSimpleVO getSeckillSpuDetail(Long spuId) {
-        return null;
+        // 使用常量拼接spuId获得Redis的key
+        String seckillSpuDetailKey=SECKILL_SPU_DETAIL_VO_PREFIX+spuId;
+        // 先声明一个返回值类型的对象,设值为null即可
+        // 因为后面判断无论Redis中有没有这个key,都需要使用这个对象
+        SeckillSpuDetailSimpleVO simpleVO=null;
+        // 判断Redis中是否有这个Key
+        if(redisTemplate.hasKey(seckillSpuDetailKey)){
+            // 如果 key已经存在,直接从redis中获取即可
+            simpleVO=(SeckillSpuDetailSimpleVO)redisTemplate
+                    .boundValueOps(seckillSpuDetailKey).get();
+        }
+        // 返回simpleVO
+        return simpleVO;
     }
 }

@@ -96,7 +96,21 @@ public class SeckillSpuServiceImpl implements ISeckillSpuService {
                 throw new CoolSharkServiceException(ResponseCode.NOT_FOUND,
                         "您访问的商品不存在!");
             }
-
+            // 到此为止,我们已经查询出了spu的秒杀商品信息,下面还要获取常规商品信息
+            // dubbo调用product模块的方法获取spu常规信息
+            SpuStandardVO spuStandardVO= dubboSeckillSpuService
+                                                        .getSpuById(spuId);
+            seckillSpuVO=new SeckillSpuVO();
+            // 将常规信息中的同名属性赋值到seckillSpuVO对象中
+            BeanUtils.copyProperties(spuStandardVO,seckillSpuVO);
+            // 将秒杀信息也赋值到seckillSpuVO
+            seckillSpuVO.setSeckillListPrice(seckillSpu.getListPrice());
+            seckillSpuVO.setStartTime(seckillSpu.getStartTime());
+            seckillSpuVO.setEndTime(seckillSpu.getEndTime());
+            // seckillSpuVO对象保存到Redis中
+            redisTemplate.boundValueOps(seckillSpuKey).set(
+                    seckillSpuVO,10*60*1000+RandomUtils.nextInt(10000),
+                    TimeUnit.MILLISECONDS);
         }
 
 

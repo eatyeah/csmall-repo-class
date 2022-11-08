@@ -48,6 +48,7 @@ public class SeckillInitialJob implements Job {
 
     @Override
     public void execute(JobExecutionContext jobExecutionContext) throws JobExecutionException {
+
         // 当前方法是执行缓存预热工作的
         // 本方法运行的时机是秒杀开始前5分钟,所以要获取分钟后进行秒杀的所有商品
         LocalDateTime time = LocalDateTime.now().plusMinutes(5);
@@ -107,6 +108,7 @@ public class SeckillInitialJob implements Job {
             }
 
         }
+
 
     }
 }

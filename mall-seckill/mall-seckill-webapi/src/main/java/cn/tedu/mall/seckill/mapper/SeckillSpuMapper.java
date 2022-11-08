@@ -17,4 +17,10 @@ public interface SeckillSpuMapper {
 
     // 根据SpuId查询spu秒杀信息
     SeckillSpu findSeckillSpuById(Long spuId);
+
+    // 布隆过滤器用:查询获得所有秒杀商品的SpuId数组
+    Long[] findAllSeckillSpuIds();
+
+
+
 }

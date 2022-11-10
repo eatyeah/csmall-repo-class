@@ -5,6 +5,7 @@ import cn.tedu.mall.common.pojo.domain.CsmallAuthenticationInfo;
 import cn.tedu.mall.common.restful.ResponseCode;
 import cn.tedu.mall.order.service.IOmsOrderService;
 import cn.tedu.mall.pojo.order.dto.OrderAddDTO;
+import cn.tedu.mall.pojo.order.dto.OrderItemAddDTO;
 import cn.tedu.mall.pojo.seckill.dto.SeckillOrderAddDTO;
 import cn.tedu.mall.pojo.seckill.vo.SeckillCommitVO;
 import cn.tedu.mall.seckill.service.ISeckillService;
@@ -18,6 +19,9 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Service
 @Slf4j
@@ -101,8 +105,18 @@ public class SeckillServiceImpl implements ISeckillService {
         // 这两个订单对象基本属性都相同,区别在于
         // orderAddDTO普通订单对象,其中的订单项是一个集合:List<OrderItemAddDTO>
         // seckillOrderAddDTO秒杀订单对象,其中的秒杀订单项是一个对象:SeckillOrderItemAddDTO
-
-        return null;
+        // 我们需要先获得一个普通订单的订单项对象
+        OrderItemAddDTO orderItemAddDTO=new OrderItemAddDTO();
+        BeanUtils.copyProperties(seckillOrderAddDTO.getSeckillOrderItemAddDTO(),
+                                    orderItemAddDTO);
+        // 实例化orderAddDTO对象中需要的普通订单项集合
+        List<OrderItemAddDTO> list=new ArrayList<>();
+        // 将赋值好的普通订单项对象添加到list集合中
+        list.add(orderItemAddDTO);
+        // 将普通订单项集合,赋值给OrderAddDTO
+        orderAddDTO.setOrderItems(list);
+        // 别忘了返回正确的对象!
+        return orderAddDTO;
     }
 
 

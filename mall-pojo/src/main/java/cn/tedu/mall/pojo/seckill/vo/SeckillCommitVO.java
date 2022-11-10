@@ -5,12 +5,13 @@ import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 
+import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @ApiModel(value="秒杀提交后VO")
 @Data
-public class SeckillCommitVO {
+public class SeckillCommitVO implements Serializable {
     @ApiModelProperty(value="订单id",name="id",example = "1")
     private Long id;
     @ApiModelProperty(value="订单编号",name="sn",example = "sn")

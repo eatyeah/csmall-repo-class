@@ -6,8 +6,11 @@ import cn.tedu.mall.common.restful.ResponseCode;
 import cn.tedu.mall.order.service.IOmsOrderService;
 import cn.tedu.mall.pojo.order.dto.OrderAddDTO;
 import cn.tedu.mall.pojo.order.dto.OrderItemAddDTO;
+import cn.tedu.mall.pojo.order.vo.OrderAddVO;
 import cn.tedu.mall.pojo.seckill.dto.SeckillOrderAddDTO;
+import cn.tedu.mall.pojo.seckill.model.Success;
 import cn.tedu.mall.pojo.seckill.vo.SeckillCommitVO;
+import cn.tedu.mall.seckill.config.RabbitMqComponentConfiguration;
 import cn.tedu.mall.seckill.service.ISeckillService;
 import cn.tedu.mall.seckill.utils.SeckillCacheUtils;
 import lombok.extern.slf4j.Slf4j;
@@ -93,8 +96,37 @@ public class SeckillServiceImpl implements ISeckillService {
         // 当前方法参数:SeckillOrderAddDTO,dubbo调用需要的参数:OrderAddDTO
         // 下面开始转换,转换代码较多,单独编写一个方法
         OrderAddDTO orderAddDTO=convertSeckillOrderToOrder(seckillOrderAddDTO);
-
-        return null;
+        // 完成了转换,普通订单信息所有主要属性,都赋值完毕了
+        // 在dubbo调用发送之前,最后将用户Id赋值到orderAddDTO
+        orderAddDTO.setUserId(userId);
+        // 使用dubbo调用生成订单的方法
+        OrderAddVO orderAddVO=dubboOrderService.addOrder(orderAddDTO);
+        // 第三阶段:使用消息队列(RabbitMQ)将秒杀成功记录信息保存到success表中
+        // 业务要求我们记录秒杀成功的信息,但是它不是迫切运行的,所以使用消息队列完成
+        // 我们要创建Success秒杀成功记录对象,然后将这个对象发送给RabbitMQ
+        // 另寻时机编写处理消息队列的类和方法即可
+        Success success=new Success();
+        // Success大部分属性和秒杀sku信息重叠,可以使用秒杀订单项对象,给他同名属性赋值
+        BeanUtils.copyProperties(seckillOrderAddDTO.getSeckillOrderItemAddDTO(),
+                                    success);
+        // 把确实的信息补齐
+        success.setUserId(userId);
+        success.setOrderSn(orderAddVO.getSn());
+        success.setSeckillPrice(
+                        seckillOrderAddDTO.getSeckillOrderItemAddDTO().getPrice());
+        // 将赋值完备的success对象发送给RabbitMQ
+        rabbitTemplate.convertAndSend(
+                RabbitMqComponentConfiguration.SECKILL_EX,
+                RabbitMqComponentConfiguration.SECKILL_RK,
+                success);
+        // 下面无需关注消息队列的后续处理,直接秒杀订单的后续工作即可
+        // 第四阶段:秒杀订单信息返回
+        // 当前方法要求返回SeckillCommitVO类型对象
+        // 观察这个类中的属性,和OrderAddVO类属性完全一致,所以可以直接赋值之后返回
+        SeckillCommitVO commitVO=new SeckillCommitVO();
+        BeanUtils.copyProperties(orderAddVO,commitVO);
+        // 别忘了返回commitVO
+        return commitVO;
     }
     // 秒杀订单,转换为普通定的方法
     private OrderAddDTO convertSeckillOrderToOrder(SeckillOrderAddDTO seckillOrderAddDTO) {

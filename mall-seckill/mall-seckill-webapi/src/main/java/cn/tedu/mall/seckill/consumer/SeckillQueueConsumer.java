@@ -30,5 +30,8 @@ public class SeckillQueueConsumer {
         // 如果需要精确的需求,发生异常时,可以将错误信息发送给死信队列,由人工处理
         // 死信队列是最后的办法,实际开发中慎用
 
+        int nuber=10;
+
+
     }
 }

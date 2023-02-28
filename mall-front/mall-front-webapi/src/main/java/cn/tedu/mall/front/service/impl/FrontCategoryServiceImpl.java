@@ -12,6 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -68,7 +69,28 @@ public class FrontCategoryServiceImpl implements IFrontCategoryService {
             FrontCategoryEntity frontCategoryEntity = new FrontCategoryEntity();
             // 同名属性赋值
             BeanUtils.copyProperties(categoryStandardVO, frontCategoryEntity);
+            // 获取当前分类对象的父分类id,用作map元素的key值(如果父分类id为0,就是一级分类)
+            Long parentId = frontCategoryEntity.getParentId();
+            // 判断这个父分类id是否已经存在于map
+            if (!map.containsKey(parentId)){
+                // 如果map中没有当前遍历对象父分类id作为key的元素
+                // 那么就要新建这个元素，就要确定key和value
+                // key就是parentId,value是一个list,要实例化,而且list中还要保存当前正在遍历的对象
+                List<FrontCategoryEntity> value = new ArrayList<>();
+                value.add(frontCategoryEntity);
+                // 最后将准备好的key和value保存到map中
+                map.put(parentId, value);
+            } else {
+                // 如果map中已经有当前遍历对象父分类id作为key的元素
+                map.get(parentId).add(frontCategoryEntity);
+            }
+
         }
         return null;
     }
 }
+
+
+
+
+

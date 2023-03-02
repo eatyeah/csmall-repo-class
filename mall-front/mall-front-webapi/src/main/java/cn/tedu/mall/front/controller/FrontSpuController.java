@@ -25,10 +25,10 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/front/spu")
 @Api(tags = "前台商品Spu模块")
 public class FrontSpuController {
-
     @Autowired
     private IFrontProductService frontProductService;
 
+    // localhost:10004/front/spu/list/3
     @GetMapping("/list/{categoryId}")
     @ApiOperation("根据分类id分页查询spu列表")
     @ApiImplicitParams({
@@ -38,7 +38,8 @@ public class FrontSpuController {
     })
     public JsonResult<JsonPage<SpuListItemVO>> listSpuByPage(
             @PathVariable Long categoryId, Integer page, Integer pageSize) {
-        JsonPage<SpuListItemVO> jsonPage = frontProductService.listSpuByCategoryId(categoryId, page, pageSize);
+        JsonPage<SpuListItemVO> jsonPage = frontProductService
+                .listSpuByCategoryId(categoryId, page, pageSize);
         return JsonResult.ok(jsonPage);
     }
 }

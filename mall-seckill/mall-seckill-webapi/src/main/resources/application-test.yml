@@ -15,14 +15,14 @@ spring:
   cloud:
     nacos:
       discovery:
-        server-addr: ${my.server.addr}:8848
+        server-addr: ${my.server.addr}:18848
     sentinel:
       transport:
         port: 8870
         dashboard: 127.0.0.1:8080
   redis:
     host: ${my.server.addr}
-    port: 6379
+    port: 16379
     password:
   rabbitmq:
     host: ${my.server.addr}
@@ -38,7 +38,7 @@ dubbo:
     port: -1
     name: dubbo
   registry:
-    address: nacos://${my.server.addr}:8848
+    address: nacos://${my.server.addr}:18848
     use-as-metadata-center: false
     use-as-config-center: false
   consumer:

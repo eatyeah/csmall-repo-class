@@ -18,6 +18,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @Description:
@@ -47,15 +48,24 @@ public class FrontCategoryServiceImpl implements IFrontCategoryService {
         if (redisTemplate.hasKey(CATEGORY_TREE_KEY)) {
             // 如果存在,直接从redis中获取
             FrontCategoryTreeVO<FrontCategoryEntity> treeVO =
-                    (FrontCategoryTreeVO<FrontCategoryEntity>)
-                            redisTemplate.boundValueOps(CATEGORY_TREE_KEY).get();
+                    (FrontCategoryTreeVO<FrontCategoryEntity>) redisTemplate.boundValueOps(CATEGORY_TREE_KEY).get();
+            // 将查询出的数据返回
             return treeVO;
         }
+        // Redis中没有三级分类树信息,表示本次请求可能是首次访问
+        // 就需要从数据库中查询分类对象集合,再构建三级分类树,再保存到Redis的业务流程
+        // dubbo调用查询所有分类对象的方法
         List<CategoryStandardVO> categoryStandardVOs = dubboCategoryService.getCategoryList();
-
+        // 记住CategoryStandardVO是没有children属性的,FrontCategoryEntity是有的!
+        // 下面需要编写一个方法,将子分类对象保存到对应的父分类对象的children属性中
+        // 大概思路就是先将CategoryStandardVO转换为FrontCategoryEntity类型,然后再将父子分类关联
+        // 整个转换和关联的过程比较复杂,我们编写一个方法来完成
         FrontCategoryTreeVO<FrontCategoryEntity> treeVO = initTree(categoryStandardVOs);
-
-        return null;
+        // 上面方法完成了三级分类树的构建,下面要将treeVO保存到Redis中
+        redisTemplate.boundValueOps(CATEGORY_TREE_KEY).set(treeVO, 1, TimeUnit.MINUTES);
+        // 上面时间定义了1分钟,是学习测试比较合适的,上线项目中,保存时间会比较长,例如24小时甚至更多
+        // 最后也别忘了返回treeVO
+        return treeVO;
     }
 
     private FrontCategoryTreeVO<FrontCategoryEntity> initTree(List<CategoryStandardVO> categoryStandardVOs) {
@@ -90,7 +100,7 @@ public class FrontCategoryServiceImpl implements IFrontCategoryService {
         // 第二步:
         // 将子分类对象添加到对应的父分类对象的childrens属性中
         // 先获取所有一级分类对象,也就是父分类id为0的对象
-        List<FrontCategoryEntity> firstLevels = map.get(0);
+        List<FrontCategoryEntity> firstLevels = map.get(0L);
         // 判断一级分类集合如果为null(或没有元素),直接抛出异常,终止程序
         if (firstLevels == null || firstLevels.isEmpty()) {
             throw new CoolSharkServiceException(ResponseCode.INTERNAL_SERVER_ERROR, "没有一级分类对象");
@@ -108,8 +118,31 @@ public class FrontCategoryServiceImpl implements IFrontCategoryService {
                 // 如果二级分类对象缺失,可以直接跳过本次循环剩余内容,继续下次循环
                 continue;
             }
+            // 确定二级分类对象后,遍历二级分类对象集合
+            for (FrontCategoryEntity twoLevel : secondLevels) {
+                // 获取当前二级分类对象的id,作为三级分类的父id
+                Long thirdLevelParentId = twoLevel.getId();
+                // 根据这个id获得这个二级分类对象关联的所有三级分类对象集合
+                List<FrontCategoryEntity> thirdLevels = map.get(thirdLevelParentId);
+                // 再判断这个三级分类集合是否为null
+                if (thirdLevels == null || thirdLevels.isEmpty()) {
+                    log.warn("当前对象没有三级分类内容：{}", thirdLevelParentId);
+                    continue;
+                }
+                // 将三级分类对象集合添加到关联的二级分类对象childrens属性中
+                twoLevel.setChildrens(thirdLevels);
+            }
+            // 将二级分类对象集合添加到关联的一级分类对象childrens属性中
+            oneLevel.setChildrens(secondLevels);
         }
-        return null;
+        // 到此为止,所有的分类对象都应该确认了自己和父\子分类对象的关联关系
+        // 最后我们要将一级分类的集合firstLevels,
+        // 赋值给FrontCategoryTreeVO<FrontCategoryEntity>的list属性
+        // 实例化对象
+        FrontCategoryTreeVO<FrontCategoryEntity> treeVO = new FrontCategoryTreeVO<>();
+        treeVO.setCategories(firstLevels);
+        // 最后千万别忘了返回  treeVO!!!!
+        return treeVO;
     }
 }
 

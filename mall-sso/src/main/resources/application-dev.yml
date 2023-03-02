@@ -23,7 +23,7 @@ spring:
   #redis
   redis:
     host: ${my.server.addr}
-    port: 6379
+    port: 16379
     password:
 logging:
   level:

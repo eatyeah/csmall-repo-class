@@ -19,9 +19,9 @@ spring:
   cloud:
     nacos:
       discovery:
-        server-addr: ${my.server.addr}:8848
+        server-addr: ${my.server.addr}:18848
   redis:
-    port: 6379
+    port: 16379
     host: ${my.server.addr}
     password:
 dubbo:
@@ -31,7 +31,7 @@ dubbo:
     port: -1
     name: dubbo
   registry:
-    address: nacos://${my.server.addr}:8848
+    address: nacos://${my.server.addr}:18848
     use-as-config-center: false
     use-as-metadata-center: false
   consumer:
@@ -43,7 +43,7 @@ seata:
     vgroup-mapping:
       csmall_group: default
     grouplist:
-      default: ${my.server.addr}:8091
+      default: ${my.server.addr}:18091
   client:
     undo:
       log-serialization: kryo

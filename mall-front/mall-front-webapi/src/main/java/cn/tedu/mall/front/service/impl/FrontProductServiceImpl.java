@@ -3,8 +3,11 @@ package cn.tedu.mall.front.service.impl;
 import cn.tedu.mall.common.restful.JsonPage;
 import cn.tedu.mall.front.service.IFrontProductService;
 import cn.tedu.mall.pojo.product.vo.*;
+import cn.tedu.mall.product.service.front.IForFrontAttributeService;
+import cn.tedu.mall.product.service.front.IForFrontSkuService;
 import cn.tedu.mall.product.service.front.IForFrontSpuService;
 import org.apache.dubbo.config.annotation.DubboReference;
+import org.springframework.stereotype.Service;
 
 import java.util.List;
 
@@ -14,10 +17,19 @@ import java.util.List;
  * @Date: 2023/3/2
  * @Time: 15:32
  */
+
+@Service
 public class FrontProductServiceImpl implements IFrontProductService {
 
     @DubboReference
     private IForFrontSpuService dubboSpuService;
+
+    // 根据spuId查询sku信息的dubbo调用对象
+    @DubboReference
+    private IForFrontSkuService dubboSkuService;
+    // 根据spuId查询属性的dubbo调用对象
+    @DubboReference
+    private IForFrontAttributeService dubboAttributeService;
 
     // 根据分类id分页查询spu列表
     @Override
@@ -30,21 +42,25 @@ public class FrontProductServiceImpl implements IFrontProductService {
 
     @Override
     public SpuStandardVO getFrontSpuById(Long id) {
-        return null;
+        SpuStandardVO spuStandardVO = dubboSpuService.getSpuById(id);
+        return spuStandardVO;
     }
 
     @Override
     public List<SkuStandardVO> getFrontSkusBySpuId(Long spuId) {
-        return null;
+        List<SkuStandardVO> list = dubboSkuService.getSkusBySpuId(spuId);
+        return list;
     }
 
     @Override
     public SpuDetailStandardVO getSpuDetail(Long spuId) {
-        return null;
+        SpuDetailStandardVO spuDetailStandardVO = dubboSpuService.getSpuDetailById(spuId);
+        return spuDetailStandardVO;
     }
 
     @Override
     public List<AttributeStandardVO> getSpuAttributesBySpuId(Long spuId) {
-        return null;
+        List<AttributeStandardVO> list = dubboAttributeService.getSpuAttributesBySpuId(spuId);
+        return list;
     }
 }

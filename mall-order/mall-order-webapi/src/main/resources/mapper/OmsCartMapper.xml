@@ -4,38 +4,38 @@
 
     <!-- 通用查询映射结果 -->
     <resultMap id="BaseResultMap" type="cn.tedu.mall.pojo.order.model.OmsCart">
-        <id column="id" property="id" />
-        <result column="user_id" property="userId" />
-        <result column="sku_id" property="skuId" />
-        <result column="title" property="title" />
-        <result column="main_picture" property="mainPicture" />
-        <result column="price" property="price" />
-        <result column="quantity" property="quantity" />
-        <result column="gmt_create" property="gmtCreate" />
-        <result column="gmt_modified" property="gmtModified" />
+        <id column="id" property="id"/>
+        <result column="user_id" property="userId"/>
+        <result column="sku_id" property="skuId"/>
+        <result column="title" property="title"/>
+        <result column="main_picture" property="mainPicture"/>
+        <result column="price" property="price"/>
+        <result column="quantity" property="quantity"/>
+        <result column="gmt_create" property="gmtCreate"/>
+        <result column="gmt_modified" property="gmtModified"/>
         <result column="bar_code" property="barCode"/>
         <result column="data" property="data"/>
     </resultMap>
 
     <!--   定义查询omsCart表时使用的列名sql片段   -->
-    <sql id="SimpleQueryFileds">
+    <sql id="SimpleQueryFields">
         <if test="true">
             id,
             user_id,
+            sku_id,
             title,
             main_picture,
+            price,
             quantity,
             gmt_create,
-            gmt_moditified,
-            bar_code,
-            data
+            gmt_modified
         </if>
     </sql>
-
     <!--  判断当前用户的购物车中是否存在指定商品  -->
     <select id="selectExistsCart" resultMap="BaseResultMap">
         select
-        <include refid="SimpleQueryFileds"/>
+        <include refid="SimpleQueryFields"/>
+        from
         oms_cart
         where
         user_id=#{userId}
@@ -58,12 +58,13 @@
                 #{price},
                 #{quantity})
     </insert>
-
     <!-- 修改购物车中的sku商品数量  -->
     <update id="updateQuantityById">
-        update oms_cart
+        update
+            oms_cart
         set quantity=#{quantity}
         where id = #{id}
+
     </update>
 
 </mapper>

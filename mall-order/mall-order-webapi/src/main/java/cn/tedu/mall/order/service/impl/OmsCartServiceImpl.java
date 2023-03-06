@@ -98,7 +98,9 @@ public class OmsCartServiceImpl implements IOmsCartService {
 
     @Override
     public void removeUserCarts(OmsCart omsCart) {
-
+        // 直接调用删除购物车的方法即可
+        // 删除影响的行数不用判断,因为无论删除成功还是失败,都不影响生成订单
+        omsCartMapper.deleteCartByUserIdAndSkuId(omsCart);
 
     }
 

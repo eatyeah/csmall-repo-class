@@ -10,12 +10,16 @@ import cn.tedu.mall.pojo.order.dto.CartAddDTO;
 import cn.tedu.mall.pojo.order.dto.CartUpdateDTO;
 import cn.tedu.mall.pojo.order.model.OmsCart;
 import cn.tedu.mall.pojo.order.vo.CartStandardVO;
+import com.github.pagehelper.PageHelper;
+import com.github.pagehelper.PageInfo;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 
 /**
  * @Description:
@@ -65,11 +69,19 @@ public class OmsCartServiceImpl implements IOmsCartService {
 
     @Override
     public JsonPage<CartStandardVO> listCarts(Integer page, Integer pageSize) {
-        return null;
+        Long userId = getUserId();
+        PageHelper.startPage(page, pageSize);
+        List<CartStandardVO> list = omsCartMapper.selectCartByUserId(userId);
+        return JsonPage.restPage(new PageInfo<>(list));
     }
 
     @Override
     public void removeCart(Long[] ids) {
+        // 调用mapper中批量删除的方法
+        int rows = omsCartMapper.deleteCartsByIds(ids);
+        if (rows == 0) {
+            throw new CoolSharkServiceException(ResponseCode.NOT_FOUND, "您要删除的商品已经删除了!");
+        }
 
     }
 

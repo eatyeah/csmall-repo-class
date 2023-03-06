@@ -95,13 +95,21 @@ public class OmsCartServiceImpl implements IOmsCartService {
         }
     }
 
+
     @Override
     public void removeUserCarts(OmsCart omsCart) {
 
+
     }
 
+    // 修改购物车中商品数量的业务逻辑层方法
     @Override
     public void updateQuantity(CartUpdateDTO cartUpdateDTO) {
+        // 因为执行修改的mapper方法参数是OmsCart类型
+        // 所以要先实例化OmsCart
+        OmsCart omsCart = new OmsCart();
+        BeanUtils.copyProperties(cartUpdateDTO, omsCart);
+        omsCartMapper.updateQuantityById(omsCart);
 
     }
 

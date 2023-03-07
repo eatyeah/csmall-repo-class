@@ -3,8 +3,10 @@ package cn.tedu.mall.order.service;
 import cn.tedu.mall.common.restful.JsonPage;
 import cn.tedu.mall.pojo.order.dto.CartAddDTO;
 import cn.tedu.mall.pojo.order.dto.CartUpdateDTO;
+import cn.tedu.mall.pojo.order.dto.OrderAddDTO;
 import cn.tedu.mall.pojo.order.model.OmsCart;
 import cn.tedu.mall.pojo.order.vo.CartStandardVO;
+import cn.tedu.mall.pojo.order.vo.OrderAddVO;
 
 /**
  * <p>
@@ -15,6 +17,12 @@ import cn.tedu.mall.pojo.order.vo.CartStandardVO;
  * @since 2022-02-16
  */
 public interface IOmsCartService{
+    // 新增订单的方法
+    // 这个方法dubbo调用了product模块的方法,操作了数据库,有分布式事务的需求
+    // 需要使用注解激活Seata分布式事务的功能
+    @GlobalTransactional
+    OrderAddVO addOrder(OrderAddDTO orderAddDTO);
+
     /**
      * 新增购物车
      * @param cartDTO

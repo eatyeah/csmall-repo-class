@@ -26,6 +26,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
@@ -94,7 +95,12 @@ public class OmsOrderServiceImpl implements IOmsCartService {
         // 后端代码对实际应付金额进行验算,以求和前端数据一致
         // 实际应付金额=原价-优惠+运费
         // 金钱相关数据使用BigDecimal类型,防止浮点偏移的误差,取消取值范围限制
-
+        BigDecimal price = order.getAmountOfOriginalPrice();
+        BigDecimal fright = order.getAmountOfActualPay();
+        BigDecimal discount = order.getAmountOfDiscount();
+        BigDecimal actualPay = order.getAmountOfActualPay();
+        // 最后将计算完成的金额赋值到order对象
+        order.setAmountOfActualPay(actualPay);
 
     }
 
